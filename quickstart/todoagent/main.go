@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 
 	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
@@ -29,12 +30,19 @@ import (
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 	"github.com/coze-dev/cozeloop-go"
+	"github.com/joho/godotenv"
 
 	"github.com/cloudwego/eino-examples/internal/gptr"
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
 
 func main() {
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	openAIAPIKey := os.Getenv("OPENAI_API_KEY")
 	openAIModelName := os.Getenv("OPENAI_MODEL_NAME")
 	openAIBaseURL := os.Getenv("OPENAI_BASE_URL")
@@ -133,9 +141,13 @@ func main() {
 
 	// 运行示例
 	resp, err := agent.Invoke(ctx, []*schema.Message{
+		// {
+		// 	Role:    schema.User,
+		// 	Content: "添加一个学习 Eino 的 TODO，同时搜索一下 cloudwego/eino 的仓库地址", // "同时搜索一下 cloudwego/eino 的仓库地址" 会触发 DuckDuckGo 工具，进行网络搜索
+		// },
 		{
 			Role:    schema.User,
-			Content: "添加一个学习 Eino 的 TODO，同时搜索一下 cloudwego/eino 的仓库地址",
+			Content: "我有哪些代办事项？",
 		},
 	})
 	if err != nil {
@@ -144,6 +156,7 @@ func main() {
 	}
 
 	// 输出结果
+	// 一次工具调用，会有一条消息
 	for idx, msg := range resp {
 		logs.Infof("\n")
 		logs.Infof("message %d: %s: %s", idx, msg.Role, msg.Content)

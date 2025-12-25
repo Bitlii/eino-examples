@@ -19,10 +19,17 @@ package main
 import (
 	"context"
 	"log"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	ctx := context.Background()
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
 	// 使用模版创建messages
 	log.Printf("===create messages===\n")
