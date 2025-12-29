@@ -18,8 +18,9 @@ package einoagent
 
 import "github.com/cloudwego/eino/schema"
 
+// UserMessage 定义了从客户端接收的用户消息结构。
 type UserMessage struct {
-	ID      string            `json:"id"`
-	Query   string            `json:"query"`
-	History []*schema.Message `json:"history"`
+	ID      string            `json:"id"`      // 消息 ID
+	Query   string            `json:"query"`   // 用户查询文本
+	History []*schema.Message `json:"history"` // 历史对话记录
 }

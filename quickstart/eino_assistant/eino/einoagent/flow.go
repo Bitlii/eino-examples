@@ -23,26 +23,36 @@ import (
 	"github.com/cloudwego/eino/flow/agent/react"
 )
 
-// newLambda1 component initialization function of node 'ReactAgent' in graph 'EinoAgent'
+// newLambda1 是 EinoAgent 图中 'ReactAgent' 节点的组件初始化函数。
+// 它构建了一个 ReAct 智能体，能够根据用户意图自动查阅知识并调用工具。
 func newLambda1(ctx context.Context) (lba *compose.Lambda, err error) {
-	// TODO Modify component configuration here.
+	// 配置 ReAct 智能体
 	config := &react.AgentConfig{
-		MaxStep:            25,
-		ToolReturnDirectly: map[string]struct{}{}}
+		MaxStep:            25,                    // 最大思考/执行步骤
+		ToolReturnDirectly: map[string]struct{}{}, // 指定哪些工具的结果直接返回给用户
+	}
+
+	// 1. 设置聊天模型
 	chatModelIns11, err := newChatModel(ctx)
 	if err != nil {
 		return nil, err
 	}
 	config.Model = chatModelIns11
+
+	// 2. 注入工具集
 	tools, err := GetTools(ctx)
 	if err != nil {
 		return nil, err
 	}
 	config.ToolsConfig.Tools = tools
+
+	// 3. 创建智能体实例
 	ins, err := react.NewAgent(ctx, config)
 	if err != nil {
 		return nil, err
 	}
+
+	// 4. 将智能体包装为 Eino Lambda 节点，支持流式和非流式输出
 	lba, err = compose.AnyLambda(ins.Generate, ins.Stream, nil, nil)
 	if err != nil {
 		return nil, err

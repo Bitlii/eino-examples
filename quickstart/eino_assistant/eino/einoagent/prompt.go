@@ -23,34 +23,35 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
+// 角色系统提示词，定义了助手的身份、能力和行为准则。
 var systemPrompt = `
-# Role: Eino Expert Assistant
+# 角色：Eino 专家助手
 
-## Core Competencies
-- knowledge of Eino framework and ecosystem
-- Project scaffolding and best practices consultation
-- Documentation navigation and implementation guidance
-- Search web, clone github repo, open file/url, task management
+## 核心能力
+- 精通 Eino 框架及其生态系统
+- 提供项目脚手架及最佳实践咨询
+- 引导文档查询及路径实现
+- 支持 Web 搜索、代码仓库克隆、打开文件/URL、任务管理
 
-## Interaction Guidelines
-- Before responding, ensure you:
-  • Fully understand the user's request and requirements, if there are any ambiguities, clarify with the user
-  • Consider the most appropriate solution approach
+## 交互指南
+- 在回应前，请确保：
+  • 充分理解用户的请求和要求，如有模糊之处，请先向用户确认
+  • 思考最合适的解决方案
 
-- When providing assistance:
-  • Be clear and concise
-  • Include practical examples when relevant
-  • Reference documentation when helpful
-  • Suggest improvements or next steps if applicable
+- 提供协助时：
+  • 表达清晰、简洁
+  • 在相关时包含实际示例
+  • 在有用时参考官方文档
+  • 如果适用，建议改进点或后续步骤
 
-- If a request exceeds your capabilities:
-  • Clearly communicate your limitations, suggest alternative approaches if possible
+- 如果请求超出了你的能力范围：
+  • 明确告知你的局限性，并尽可能建议替代方案
 
-- If the question is compound or complex, you need to think step by step, avoiding giving low-quality answers directly.
+- 对于复合或复杂问题，你需要循序渐进地思考，避免直接给出低质量答案。
 
-## Context Information
-- Current Date: {date}
-- Related Documents: |-
+## 上下文信息
+- 当前日期：{date}
+- 相关参考文档：|-
 ==== doc start ====
   {documents}
 ==== doc end ====
@@ -61,15 +62,15 @@ type ChatTemplateConfig struct {
 	Templates  []schema.MessagesTemplate
 }
 
-// newChatTemplate component initialization function of node 'ChatTemplate' in graph 'EinoAgent'
+// newChatTemplate 是 EinoAgent 图中 'ChatTemplate' 节点的组件初始化函数。
+// 它组合了系统提示词、对话历史占位符和当前用户消息。
 func newChatTemplate(ctx context.Context) (ctp prompt.ChatTemplate, err error) {
-	// TODO Modify component configuration here.
 	config := &ChatTemplateConfig{
-		FormatType: schema.FString,
+		FormatType: schema.FString, // 使用 FString 格式进行变量替换
 		Templates: []schema.MessagesTemplate{
-			schema.SystemMessage(systemPrompt),
-			schema.MessagesPlaceholder("history", true),
-			schema.UserMessage("{content}"),
+			schema.SystemMessage(systemPrompt),          // 系统角色设定
+			schema.MessagesPlaceholder("history", true), // 历史对话占位符，如果为空则忽略
+			schema.UserMessage("{content}"),             // 用户当前输入占位符
 		},
 	}
 	ctp = prompt.FromMessages(config.FormatType, config.Templates...)

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// Package gitclone 提供了用于克隆或拉取 Git 仓库的工具。
 package gitclone
 
 import (
@@ -28,12 +29,14 @@ import (
 	"github.com/cloudwego/eino/components/tool/utils"
 )
 
+// GitCloneFileImpl 是 GitClone 工具的实现。
 type GitCloneFileImpl struct {
 	config *GitCloneFileConfig
 }
 
+// GitCloneFileConfig 包含了 GitClone 工具的配置。
 type GitCloneFileConfig struct {
-	BaseDir string
+	BaseDir string // 仓库克隆的基础目录
 }
 
 func defaultGitCloneFileConfig(ctx context.Context) (*GitCloneFileConfig, error) {
@@ -43,6 +46,7 @@ func defaultGitCloneFileConfig(ctx context.Context) (*GitCloneFileConfig, error)
 	return config, nil
 }
 
+// NewGitCloneFile 创建一个新的 GitClone 工具实例。
 func NewGitCloneFile(ctx context.Context, config *GitCloneFileConfig) (tn tool.BaseTool, err error) {
 	if config == nil {
 		config, err = defaultGitCloneFileConfig(ctx)
@@ -51,7 +55,7 @@ func NewGitCloneFile(ctx context.Context, config *GitCloneFileConfig) (tn tool.B
 		}
 	}
 	if config.BaseDir == "" {
-		return nil, fmt.Errorf("base dir cannot be empty")
+		return nil, fmt.Errorf("基础目录不能为空")
 	}
 	t := &GitCloneFileImpl{config: config}
 	tn, err = t.ToEinoTool()
@@ -61,21 +65,23 @@ func NewGitCloneFile(ctx context.Context, config *GitCloneFileConfig) (tn tool.B
 	return tn, nil
 }
 
+// ToEinoTool 将实现转换为 Eino 框架可识别的工具接口。
 func (g *GitCloneFileImpl) ToEinoTool() (tool.BaseTool, error) {
-	return utils.InferTool("gitclone", "git clone or pull a repository", g.Invoke)
+	return utils.InferTool("gitclone", "克隆或拉取 GitHub 仓库", g.Invoke)
 }
 
+// Invoke 是工具执行的入口函数。
 func (g *GitCloneFileImpl) Invoke(ctx context.Context, req *GitCloneRequest) (res *GitCloneResponse, err error) {
 	res = &GitCloneResponse{}
 
 	if req.Url == "" {
-		res.Error = "URL cannot be empty"
+		res.Error = "URL 不能为空"
 		return res, nil
 	}
 
 	valid, cloneURL := isValidGitURL(req.Url)
 	if !valid {
-		res.Error = fmt.Sprintf("Invalid Git URL format: %s", req.Url)
+		res.Error = fmt.Sprintf("无效的 Git URL 格式: %s", req.Url)
 		return res, nil
 	}
 
@@ -83,31 +89,36 @@ func (g *GitCloneFileImpl) Invoke(ctx context.Context, req *GitCloneRequest) (re
 	repoDir = filepath.Join(g.config.BaseDir, repoDir)
 	repoPath := filepath.Join(repoDir, repoName)
 
+	// 确保基础目录存在
 	if err := os.MkdirAll(g.config.BaseDir, 0755); err != nil {
-		res.Error = fmt.Sprintf("Failed to create directory: %v", err)
+		res.Error = fmt.Sprintf("创建目录失败: %v", err)
 		return res, nil
 	}
 
 	if req.Action == GitCloneActionClone {
+		// 检查仓库是否已存在
 		if _, err := os.Stat(repoPath); err == nil {
-			res.Error = "Repository already exists"
+			res.Error = "仓库已存在"
 			return res, nil
 		}
 
+		// 执行 git clone
 		cmd := exec.CommandContext(ctx, "git", "clone", cloneURL, repoPath)
 		if output, err := cmd.CombinedOutput(); err != nil {
-			res.Error = fmt.Sprintf("Clone failed: %v, output: %s", err, output)
+			res.Error = fmt.Sprintf("克隆失败: %v, 输出: %s", err, output)
 			return res, nil
 		}
 	} else if req.Action == GitCloneActionPull {
+		// 检查仓库是否存在
 		if _, err := os.Stat(repoPath); os.IsNotExist(err) {
-			res.Error = fmt.Sprintf("repo does not exist: %s", repoPath)
+			res.Error = fmt.Sprintf("仓库不存在: %s", repoPath)
 			return res, nil
 		}
 
+		// 执行 git pull
 		cmd := exec.CommandContext(ctx, "git", "-C", repoPath, "pull")
 		if output, err := cmd.CombinedOutput(); err != nil {
-			res.Error = fmt.Sprintf("Pull failed: %v, output: %s", err, output)
+			res.Error = fmt.Sprintf("拉取失败: %v, 输出: %s", err, output)
 			return res, nil
 		}
 
@@ -115,10 +126,10 @@ func (g *GitCloneFileImpl) Invoke(ctx context.Context, req *GitCloneRequest) (re
 
 	absPath, err := filepath.Abs(repoPath)
 	if err != nil {
-		res.Error = fmt.Sprintf("failed to get absolute [%s] path: %v", repoPath, err)
+		res.Error = fmt.Sprintf("获取绝对路径失败 [%s]: %v", repoPath, err)
 		return res, nil
 	}
-	res.Message = fmt.Sprintf("success, repo path: %s", absPath)
+	res.Message = fmt.Sprintf("成功，仓库路径为: %s", absPath)
 	return res, nil
 }
 
@@ -166,6 +177,7 @@ func extractRepoDir(url string) (string, string) {
 	return repoDir, repoName
 }
 
+// GitCloneAction 定义了工具支持的操作类型。
 type GitCloneAction string
 
 const (
@@ -173,12 +185,14 @@ const (
 	GitCloneActionPull  GitCloneAction = "pull"
 )
 
+// GitCloneRequest 定义了工具的请求参数。
 type GitCloneRequest struct {
-	Url    string         `json:"url" jsonschema_description:"The URL of the repository to clone"`
-	Action GitCloneAction `json:"action" jsonschema_description:"The action to perform, 'clone' or 'pull'"`
+	Url    string         `json:"url" jsonschema_description:"要克隆的仓库 URL"`
+	Action GitCloneAction `json:"action" jsonschema_description:"要执行的操作，'clone' 或 'pull'"`
 }
 
+// GitCloneResponse 定义了工具的响应结果。
 type GitCloneResponse struct {
-	Message string `json:"message"`
-	Error   string `json:"error"`
+	Message string `json:"message" jsonschema_description:"成功消息"`
+	Error   string `json:"error" jsonschema_description:"错误信息"`
 }

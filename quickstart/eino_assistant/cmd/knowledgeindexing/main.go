@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+// Package main 是知识索引工具的入口。
+// 它遍历本地 Markdown 文件，通过 Eino 工作流将其向量化并存储到 Redis。
 package main
 
 import (
@@ -37,16 +39,18 @@ import (
 )
 
 func init() {
-	// check some essential envs
+	// 检查运行所需的关键环境变量
 	env.MustHasEnvs("ARK_API_KEY", "ARK_EMBEDDING_MODEL")
 }
 
 func main() {
+	// 获取可选的 CozeLoop 可视化追踪 Token
 	cozeloopApiToken := os.Getenv("COZELOOP_API_TOKEN")
-	cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
+	cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID") // 更多信息见 https://loop.coze.cn/open/docs/cozeloop/go-sdk
 
 	ctx := context.Background()
 	var handlers []callbacks.Handler
+	// 如果配置了 CozeLoop，则添加对应的全局回调处理器
 	if cozeloopApiToken != "" && cozeloopWorkspaceID != "" {
 		client, err := cozeloop.NewClient(
 			cozeloop.WithAPIToken(cozeloopApiToken),
@@ -60,42 +64,46 @@ func main() {
 	}
 	callbacks.AppendGlobalHandlers(handlers...)
 
+	// 对 ./eino-docs 目录下的所有 Markdown 文件进行 RAG 索引
 	err := indexMarkdownFiles(ctx, "./eino-docs")
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("index success")
+	fmt.Println("索引构建成功！")
 }
 
+// indexMarkdownFiles 遍历指定目录并逐个处理 Markdown 文件
 func indexMarkdownFiles(ctx context.Context, dir string) error {
+	// 构建知识索引的工作流图
 	runner, err := knowledgeindexing.BuildKnowledgeIndexing(ctx)
 	if err != nil {
-		return fmt.Errorf("build index graph failed: %w", err)
+		return fmt.Errorf("构建索引图失败: %w", err)
 	}
 
-	// 遍历 dir 下的所有 markdown 文件
+	// 遍历并处理
 	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return fmt.Errorf("walk dir failed: %w", err)
+			return fmt.Errorf("遍历目录失败: %w", err)
 		}
 		if d.IsDir() {
 			return nil
 		}
 
 		if !strings.HasSuffix(path, ".md") {
-			fmt.Printf("[skip] not a markdown file: %s\n", path)
+			fmt.Printf("[跳过] 非 Markdown 文件: %s\n", path)
 			return nil
 		}
 
-		fmt.Printf("[start] indexing file: %s\n", path)
+		fmt.Printf("[执行] 正在索引文件: %s\n", path)
 
+		// 调用工作流进行：加载 -> 拆分 -> 向量化 -> 存储
 		ids, err := runner.Invoke(ctx, document.Source{URI: path})
 		if err != nil {
-			return fmt.Errorf("invoke index graph failed: %w", err)
+			return fmt.Errorf("执行索引任务失败: %w", err)
 		}
 
-		fmt.Printf("[done] indexing file: %s, len of parts: %d\n", path, len(ids))
+		fmt.Printf("[完成] 索引文件: %s, 拆分块数: %d\n", path, len(ids))
 
 		return nil
 	})
@@ -103,28 +111,29 @@ func indexMarkdownFiles(ctx context.Context, dir string) error {
 	return err
 }
 
+// RedisVectorStoreConfig 定义了 Redis 向量库的配置
 type RedisVectorStoreConfig struct {
-	RedisKeyPrefix string
-	IndexName      string
-	Embedding      embedding.Embedder
-	Dimension      int
-	MinScore       float64
-	RedisAddr      string
+	RedisKeyPrefix string             // Redis 键前缀
+	IndexName      string             // 索引名称
+	Embedding      embedding.Embedder // 向量生成器
+	Dimension      int                // 向量维度
+	MinScore       float64            // 相关性最小分数
+	RedisAddr      string             // Redis 服务器地址
 }
 
+// initVectorIndex 显式初始化 Redis 向量索引（如果尚未创建）
 func initVectorIndex(ctx context.Context, config *RedisVectorStoreConfig) (err error) {
 	if config.Embedding == nil {
-		return fmt.Errorf("embedding cannot be nil")
+		return fmt.Errorf("向量化组件不能为空")
 	}
 	if config.Dimension <= 0 {
-		return fmt.Errorf("dimension must be positive")
+		return fmt.Errorf("向量维度必须为正数")
 	}
 
 	client := redis.NewClient(&redis.Options{
 		Addr: config.RedisAddr,
 	})
 
-	// 确保在错误时关闭连接
 	defer func() {
 		if err != nil {
 			client.Close()
@@ -132,23 +141,23 @@ func initVectorIndex(ctx context.Context, config *RedisVectorStoreConfig) (err e
 	}()
 
 	if err = client.Ping(ctx).Err(); err != nil {
-		return fmt.Errorf("failed to connect to Redis: %w", err)
+		return fmt.Errorf("连接 Redis 失败: %w", err)
 	}
 
 	indexName := fmt.Sprintf("%s%s", config.RedisKeyPrefix, config.IndexName)
 
-	// 检查是否存在索引
+	// 检查索引是否已存在
 	exists, err := client.Do(ctx, "FT.INFO", indexName).Result()
 	if err != nil {
 		if !strings.Contains(err.Error(), "Unknown index name") {
-			return fmt.Errorf("failed to check if index exists: %w", err)
+			return fmt.Errorf("检查索引是否存在失败: %w", err)
 		}
 		err = nil
 	} else if exists != nil {
 		return nil
 	}
 
-	// Create new index
+	// 执行创建索引的命令：FT.CREATE ...
 	createIndexArgs := []interface{}{
 		"FT.CREATE", indexName,
 		"ON", "HASH",
@@ -164,12 +173,12 @@ func initVectorIndex(ctx context.Context, config *RedisVectorStoreConfig) (err e
 	}
 
 	if err = client.Do(ctx, createIndexArgs...).Err(); err != nil {
-		return fmt.Errorf("failed to create index: %w", err)
+		return fmt.Errorf("创建索引失败: %w", err)
 	}
 
-	// 验证索引是否创建成功
+	// 再次验证索引状态
 	if _, err = client.Do(ctx, "FT.INFO", indexName).Result(); err != nil {
-		return fmt.Errorf("failed to verify index creation: %w", err)
+		return fmt.Errorf("验证索引创建失败: %w", err)
 	}
 
 	return nil

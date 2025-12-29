@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// Package einotool 提供了用于获取 Eino 相关信息和初始化项目模板的工具。
 package einotool
 
 import (
@@ -29,20 +30,22 @@ import (
 //go:embed templates/*
 var templateFS embed.FS
 
-const desc = `eino tool can get eino project info, 
-action:
-- get_example_project: get the example project url, path of eino-examples
-- get_github_repo: get the github repo url, e.g. eino, eino-ext, eino-examples
-- get_doc_url: get the doc url of eino website
-- init_template: init the eino project template, to create files from template
+const desc = `eino 工具可以获取 eino 项目信息。
+支持的操作：
+- get_example_project: 获取示例项目的 URL，来自 eino-examples
+- get_github_repo: 获取 GitHub 仓库地址，例如 eino, eino-ext, eino-examples
+- get_doc_url: 获取 Eino 官网的文档地址
+- init_template: 初始化 Eino 项目模板，从模板创建文件
 `
 
+// EinoAssistantToolImpl 是 Eino 助手工具的实现。
 type EinoAssistantToolImpl struct {
 	config *EinoAssistantToolConfig
 }
 
+// EinoAssistantToolConfig 包含了 Eino 助手工具的配置。
 type EinoAssistantToolConfig struct {
-	BaseDir string
+	BaseDir string // 模板初始化的基础目录
 }
 
 func defaultEinoAssistantToolConfig(ctx context.Context) (*EinoAssistantToolConfig, error) {
@@ -52,6 +55,7 @@ func defaultEinoAssistantToolConfig(ctx context.Context) (*EinoAssistantToolConf
 	return config, nil
 }
 
+// NewEinoAssistantTool 创建一个新的 Eino 助手工具实例。
 func NewEinoAssistantTool(ctx context.Context, config *EinoAssistantToolConfig) (tn tool.BaseTool, err error) {
 	if config == nil {
 		config, err = defaultEinoAssistantToolConfig(ctx)
@@ -68,12 +72,14 @@ func NewEinoAssistantTool(ctx context.Context, config *EinoAssistantToolConfig) 
 }
 
 var (
+	// EinoRepo 存储了 Eino 相关的 GitHub 仓库地址
 	EinoRepo = map[string]string{
 		"eino":          "https://github.com/cloudwego/eino",
 		"eino-ext":      "https://github.com/cloudwego/eino-ext",
 		"eino-examples": "https://github.com/cloudwego/eino-examples",
 	}
 
+	// EinoDoc 存储了 Eino 相关的文档地址
 	EinoDoc = map[string]string{
 		"eino_index": "https://www.cloudwego.io/zh/docs/eino/",
 		"quickstart": "https://www.cloudwego.io/zh/docs/eino/quick_start/",
@@ -83,6 +89,7 @@ var (
 		"integrate":  "https://www.cloudwego.io/zh/docs/eino/ecosystem_integration/",
 	}
 
+	// EinoExample 存储了 Eino 示例项目的地址
 	EinoExample = map[string][]string{
 		"agent":      {"https://github.com/cloudwego/eino-examples/tree/main/flow/agent/react"},
 		"components": {"https://github.com/cloudwego/eino-examples/tree/main/components"},
@@ -90,6 +97,7 @@ var (
 		"quickstart": {"https://github.com/cloudwego/eino-examples/tree/main/quickstart"},
 	}
 
+	// Template 定义了初始化模板时包含的文件列表
 	Template = map[string][]string{
 		"react_agent": {"react_agent/main.go"},
 		"simple_llm":  {"simple_llm/main.go"},
@@ -97,10 +105,12 @@ var (
 	}
 )
 
+// ToEinoTool 将实现转换为 Eino 框架可识别的工具接口。
 func (e *EinoAssistantToolImpl) ToEinoTool() (tool.BaseTool, error) {
 	return utils.InferTool("eino_tool", desc, e.Invoke)
 }
 
+// Invoke 是工具执行的入口函数。
 func (e *EinoAssistantToolImpl) Invoke(ctx context.Context, req *EinoToolRequest) (res *EinoToolResponse, err error) {
 	res = &EinoToolResponse{}
 
@@ -108,50 +118,50 @@ func (e *EinoAssistantToolImpl) Invoke(ctx context.Context, req *EinoToolRequest
 	case EinoToolActionGetExampleProject:
 		exampleURL := EinoExample[req.ExampleType]
 		if len(exampleURL) == 0 {
-			res.Error = "invalid example type, can be one of: agent, components, graph, quickstart. example repo is " + EinoRepo["eino-examples"]
+			res.Error = "无效的示例类型，可选值：agent, components, graph, quickstart。示例仓库地址为 " + EinoRepo["eino-examples"]
 			return
 		}
 		res.Message = exampleURL[0]
 	case EinoToolActionGetGithubRepo:
 		repoURL := EinoRepo[req.RepoType]
 		if repoURL == "" {
-			res.Error = "invalid repo type, can be one of: eino, eino-ext, eino-examples. eino repo url is " + EinoRepo["eino"]
+			res.Error = "无效的仓库类型，可选值：eino, eino-ext, eino-examples。Eino 仓库地址为 " + EinoRepo["eino"]
 			return
 		}
 		res.Message = repoURL
 	case EinoToolActionGetDocURL:
 		docURL := EinoDoc[req.DocType]
 		if docURL == "" {
-			res.Error = "invalid doc type, can be one of: eino_index, quickstart, graph, agent, components, integrate. eino doc url is " + EinoDoc["eino_index"]
+			res.Error = "无效的文档类型，可选值：eino_index, quickstart, graph, agent, components, integrate。Eino 主页文档地址为 " + EinoDoc["eino_index"]
 			return
 		}
 		res.Message = docURL
 	case EinoToolActionInitTemplate:
 		templateURL := Template[req.TemplateType]
 		if len(templateURL) == 0 {
-			res.Error = "invalid template type, can be one of: react_agent, simple_llm, http_agent"
+			res.Error = "无效的模板类型，可选值：react_agent, simple_llm, http_agent"
 			return res, nil
 		}
 
 		baseDir := e.config.BaseDir
 		for _, file := range templateURL {
-			// Read template file
+			// 读取模板文件
 			content, err := templateFS.ReadFile(filepath.Join("templates", file))
 			if err != nil {
-				res.Error = "failed to read template file: " + err.Error()
+				res.Error = "读取模板文件失败: " + err.Error()
 				return res, nil
 			}
 
-			// Create target directory
+			// 创建目标目录
 			targetPath := filepath.Join(baseDir, file)
 			if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
-				res.Error = "failed to create directory: " + err.Error()
+				res.Error = "创建目录失败: " + err.Error()
 				return res, nil
 			}
 
-			// Write file
+			// 写入文件
 			if err := os.WriteFile(targetPath, content, 0644); err != nil {
-				res.Error = "failed to write file: " + err.Error()
+				res.Error = "写入文件失败: " + err.Error()
 				return res, nil
 			}
 		}
@@ -159,33 +169,36 @@ func (e *EinoAssistantToolImpl) Invoke(ctx context.Context, req *EinoToolRequest
 		if err != nil {
 			absPath = filepath.Join(baseDir, req.TemplateType)
 		}
-		res.Message = "success, init template, path is: " + absPath
+		res.Message = "成功初始化模板，路径为: " + absPath
 		return res, nil
 	default:
-		res.Error = "invalid action, can be one of: get_example_project, get_github_repo, get_doc_url"
+		res.Error = "无效的操作，可选值：get_example_project, get_github_repo, get_doc_url, init_template"
 	}
 
 	return res, nil
 }
 
+// EinoToolAction 定义了工具支持的操作类型。
 type EinoToolAction string
 
 const (
 	EinoToolActionGetExampleProject EinoToolAction = "get_example_project" // 获取示例项目
-	EinoToolActionGetGithubRepo     EinoToolAction = "get_github_repo"     // 获取 github 仓库
+	EinoToolActionGetGithubRepo     EinoToolAction = "get_github_repo"     // 获取 GitHub 仓库
 	EinoToolActionGetDocURL         EinoToolAction = "get_doc_url"         // 获取文档地址
 	EinoToolActionInitTemplate      EinoToolAction = "init_template"       // 初始化项目模板
 )
 
+// EinoToolRequest 定义了工具的请求参数。
 type EinoToolRequest struct {
-	Action       EinoToolAction `json:"action" jsonschema_description:"'The action of the request',enum=get_example_project,enum=get_github_repo,enum=get_doc_url,enum=init_template"`
-	ExampleType  string         `json:"example_type,omitempty" jsonschema_description:"'The type of the example project, only for action: get_example_project',enum=agent,enum=components,enum=graph,enum=quickstart"`
-	RepoType     string         `json:"repo_type,omitempty" jsonschema_description:"'The type of the repo, only for action: get_github_repo',enum=eino,enum=eino-ext,enum=eino-examples"`
-	DocType      string         `json:"doc_type,omitempty" jsonschema_description:"'The type of the doc, only for action: get_doc_url',enum=eino_index,enum=quickstart,enum=graph,enum=agent,enum=components,enum=integrate"`
-	TemplateType string         `json:"template_type,omitempty" jsonschema_description:"'The template of the project, only for action: init_template',enum=react_agent,enum=simple_llm,enum=http_agent"`
+	Action       EinoToolAction `json:"action" jsonschema_description:"请求的操作类型，枚举值：get_example_project, get_github_repo, get_doc_url, init_template"`
+	ExampleType  string         `json:"example_type,omitempty" jsonschema_description:"示例项目的类型，仅在 action 为 get_example_project 时有效。枚举值：agent, components, graph, quickstart"`
+	RepoType     string         `json:"repo_type,omitempty" jsonschema_description:"仓库类型，仅在 action 为 get_github_repo 时有效。枚举值：eino, eino-ext, eino-examples"`
+	DocType      string         `json:"doc_type,omitempty" jsonschema_description:"文档类型，仅在 action 为 get_doc_url 时有效。枚举值：eino_index, quickstart, graph, agent, components, integrate"`
+	TemplateType string         `json:"template_type,omitempty" jsonschema_description:"项目模板类型，仅在 action 为 init_template 时有效。枚举值：react_agent, simple_llm, http_agent"`
 }
 
+// EinoToolResponse 定义了工具的响应结果。
 type EinoToolResponse struct {
-	Message string `json:"message" jsonschema_description:"The message of the response"`
-	Error   string `json:"error" jsonschema_description:"The error of the response"`
+	Message string `json:"message" jsonschema_description:"响应的消息内容"`
+	Error   string `json:"error" jsonschema_description:"错误信息，如果执行成功则为空"`
 }

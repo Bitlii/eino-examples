@@ -21,12 +21,14 @@ import (
 	"time"
 )
 
-// newLambda component initialization function of node 'InputToQuery' in graph 'EinoAgent'
+// newLambda 是 EinoAgent 图中 'InputToQuery' 节点的组件初始化函数。
+// 它简单地提取用户输入中的查询语句。
 func newLambda(ctx context.Context, input *UserMessage, opts ...any) (output string, err error) {
 	return input.Query, nil
 }
 
-// newLambda2 component initialization function of node 'InputToHistory' in graph 'EinoAgent'
+// newLambda2 是 EinoAgent 图中 'InputToHistory' 节点的组件初始化函数。
+// 它将原始输入封装成模板变量，包含内容、历史记录以及当前时间。
 func newLambda2(ctx context.Context, input *UserMessage, opts ...any) (output map[string]any, err error) {
 	return map[string]any{
 		"content": input.Query,

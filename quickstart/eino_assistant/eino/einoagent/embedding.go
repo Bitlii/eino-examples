@@ -24,11 +24,12 @@ import (
 	"github.com/cloudwego/eino/components/embedding"
 )
 
+// newEmbedding 是 EinoAgent 检索器中使用的向量化组件初始化函数。
+// 用于将用户查询文本转换为向量，以便在 Redis 中进行相似度检索。
 func newEmbedding(ctx context.Context) (eb embedding.Embedder, err error) {
-	// TODO Modify component configuration here.
 	config := &ark.EmbeddingConfig{
-		Model:  os.Getenv("ARK_EMBEDDING_MODEL"),
-		APIKey: os.Getenv("ARK_API_KEY"),
+		Model:  os.Getenv("ARK_EMBEDDING_MODEL"), // 向量模型 ID
+		APIKey: os.Getenv("ARK_API_KEY"),         // API Key
 	}
 	eb, err = ark.NewEmbedder(ctx, config)
 	if err != nil {

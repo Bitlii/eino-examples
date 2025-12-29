@@ -23,9 +23,10 @@ import (
 	"github.com/cloudwego/eino/components/document"
 )
 
-// newLoader component initialization function of node 'FileLoader' in graph 'KnowledgeIndexing'
+// newLoader 是 KnowledgeIndexing 图中 'FileLoader' 节点的组件初始化函数。
+// 它负责从指定的文件系统中加载文档内容。
 func newLoader(ctx context.Context) (ldr document.Loader, err error) {
-	// TODO Modify component configuration here.
+	// 使用基础的文件加载器配置
 	config := &file.FileLoaderConfig{}
 	ldr, err = file.NewFileLoader(ctx, config)
 	if err != nil {

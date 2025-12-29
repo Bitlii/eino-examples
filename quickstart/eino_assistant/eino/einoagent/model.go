@@ -24,11 +24,12 @@ import (
 	"github.com/cloudwego/eino/components/model"
 )
 
+// newChatModel 初始化 EinoAgent 使用的聊天模型组件。
+// 对接火山引擎 Ark 平台的大语言模型。
 func newChatModel(ctx context.Context) (cm model.ChatModel, err error) {
-	// TODO Modify component configuration here.
 	config := &ark.ChatModelConfig{
-		Model:  os.Getenv("ARK_CHAT_MODEL"),
-		APIKey: os.Getenv("ARK_API_KEY"),
+		Model:  os.Getenv("ARK_CHAT_MODEL"), // 聊天模型 ID
+		APIKey: os.Getenv("ARK_API_KEY"),    // API Key
 	}
 	cm, err = ark.NewChatModel(ctx, config)
 	if err != nil {

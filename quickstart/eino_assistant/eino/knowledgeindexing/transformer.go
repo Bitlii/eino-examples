@@ -23,12 +23,13 @@ import (
 	"github.com/cloudwego/eino/components/document"
 )
 
-// newDocumentTransformer component initialization function of node 'MarkdownSplitter' in graph 'KnowledgeIndexing'
+// newDocumentTransformer 是 KnowledgeIndexing 图中 'MarkdownSplitter' 节点的组件初始化函数。
+// 它负责将加载的 Markdown 文档按照标题层级进行拆分。
 func newDocumentTransformer(ctx context.Context) (tfr document.Transformer, err error) {
-	// TODO Modify component configuration here.
+	// 配置 Markdown 标题拆分器
 	config := &markdown.HeaderConfig{
 		Headers: map[string]string{
-			"#": "title",
+			"#": "title", // 将一级标题识别为标题元数据
 		},
 		TrimHeaders: false}
 	tfr, err = markdown.NewHeaderSplitter(ctx, config)

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// Package open 提供了在系统中通过默认应用程序打开文件、目录或 Web URL 的工具。
 package open
 
 import (
@@ -29,10 +30,12 @@ import (
 	"github.com/cloudwego/eino/components/tool/utils"
 )
 
+// OpenFileToolImpl 是 Open 工具的实现。
 type OpenFileToolImpl struct {
 	config *OpenFileToolConfig
 }
 
+// OpenFileToolConfig 包含了 Open 工具的配置。
 type OpenFileToolConfig struct {
 }
 
@@ -41,6 +44,7 @@ func defaultOpenFileToolConfig(ctx context.Context) (*OpenFileToolConfig, error)
 	return config, nil
 }
 
+// NewOpenFileTool 创建一个新的 Open 工具实例。
 func NewOpenFileTool(ctx context.Context, config *OpenFileToolConfig) (tn tool.BaseTool, err error) {
 	if config == nil {
 		config, err = defaultOpenFileToolConfig(ctx)
@@ -56,43 +60,49 @@ func NewOpenFileTool(ctx context.Context, config *OpenFileToolConfig) (tn tool.B
 	return tn, nil
 }
 
+// ToEinoTool 将实现转换为 Eino 框架可识别的工具接口。
 func (of *OpenFileToolImpl) ToEinoTool() (tool.InvokableTool, error) {
-	return utils.InferTool("open", "open a file/dir/web url in the system by default application", of.Invoke)
+	return utils.InferTool("open", "通过系统默认应用程序打开文件、目录或 Web URL", of.Invoke)
 }
 
+// Invoke 是工具执行的入口函数。
 func (of *OpenFileToolImpl) Invoke(ctx context.Context, req OpenReq) (res OpenRes, err error) {
 	if req.URI == "" {
-		res.Message = "uri is required"
+		res.Message = "URI 是必需的"
 		return res, nil
 	}
 
-	// if is file or dir, check if exists
+	// 如果是本地文件或目录，检查其是否存在
 	if isFilePath(req.URI) {
 		req.URI = strings.TrimPrefix(req.URI, "file:///")
 		if _, err := os.Stat(req.URI); err != nil {
-			res.Message = fmt.Sprintf("file not exists: %s", req.URI)
+			res.Message = fmt.Sprintf("文件不存在: %s", req.URI)
 			return res, nil
 		}
 	}
 
+	// 调用系统命令打开 URI
 	err = openURI(req.URI)
 	if err != nil {
-		res.Message = fmt.Sprintf("failed to open %s: %s", req.URI, err.Error())
+		res.Message = fmt.Sprintf("无法打开 %s: %s", req.URI, err.Error())
 		return res, nil
 	}
 
-	res.Message = fmt.Sprintf("success, open %s", req.URI)
+	res.Message = fmt.Sprintf("成功打开 %s", req.URI)
 	return res, nil
 }
 
+// OpenReq 定义了工具的请求参数。
 type OpenReq struct {
-	URI string `json:"uri" jsonschema_description:"The uri of the file/dir/web url to open"`
+	URI string `json:"uri" jsonschema_description:"要打开的文件、目录或 Web URL 的 URI"`
 }
 
+// OpenRes 定义了工具的响应结果。
 type OpenRes struct {
-	Message string `json:"message" jsonschema_description:"The message of the operation"`
+	Message string `json:"message" jsonschema_description:"操作结果消息"`
 }
 
+// openURI 根据操作系统的不同调用相应的命令。
 func openURI(uri string) error {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
@@ -103,11 +113,12 @@ func openURI(uri string) error {
 	case "linux":
 		cmd = exec.Command("xdg-open", uri)
 	default:
-		return fmt.Errorf("Unsupported Platform")
+		return fmt.Errorf("不支持的平台")
 	}
 	return cmd.Run()
 }
 
+// isFilePath 判断给定的 URI 是否代表一个本地文件路径。
 func isFilePath(path string) bool {
 	s, err := url.Parse(path)
 	return err == nil && s.Scheme == "file" && s.Path != ""
