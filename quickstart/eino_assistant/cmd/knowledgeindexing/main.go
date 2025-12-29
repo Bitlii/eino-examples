@@ -40,7 +40,7 @@ import (
 
 func init() {
 	// 检查运行所需的关键环境变量
-	env.MustHasEnvs("ARK_API_KEY", "ARK_EMBEDDING_MODEL")
+	env.MustHasEnvs("EMBEDDING_MODEL_BASE_URL", "EMBEDDING_MODEL")
 }
 
 func main() {

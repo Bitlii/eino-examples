@@ -21,20 +21,20 @@ import (
 	"context"
 	"os"
 
-	"github.com/cloudwego/eino-ext/components/embedding/ark"
+	"github.com/cloudwego/eino-ext/components/embedding/openai"
 	"github.com/cloudwego/eino/components/embedding"
 )
 
 // newEmbedding 是 KnowledgeIndexing 图中使用的向量化组件初始化函数。
 // 它对接了火山引擎 Ark 的向量模型。
 func newEmbedding(ctx context.Context) (eb embedding.Embedder, err error) {
-	// 配置 Ark 向量化组件
-	config := &ark.EmbeddingConfig{
-		BaseURL: "https://ark.cn-beijing.volces.com/api/v3",
-		APIKey:  os.Getenv("ARK_API_KEY"),         // 从环境变量获取 API Key
-		Model:   os.Getenv("ARK_EMBEDDING_MODEL"), // 从环境变量获取模型 ID
+	// 配置 eino 向量化组件, 使用 openai 接口
+	config := &openai.EmbeddingConfig{
+		BaseURL: os.Getenv("EMBEDDING_MODEL_BASE_URL"),
+		APIKey:  os.Getenv("EMBEDDING_MODEL_API_KEY"),
+		Model:   os.Getenv("EMBEDDING_MODEL"),
 	}
-	eb, err = ark.NewEmbedder(ctx, config)
+	eb, err = openai.NewEmbedder(ctx, config)
 	if err != nil {
 		return nil, err
 	}
