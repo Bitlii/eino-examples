@@ -62,6 +62,8 @@ func NewSimpleMemory(cfg SimpleMemoryConfig) *SimpleMemory {
 }
 
 // SimpleMemory 实现了简单的消息存储，可以存储每个对话的消息流。
+// 每个对话的消息流以 JSONL 格式存储在文件中。
+// 生产环境建议使用更复杂的消息存储方案，如数据库或分布式文件系统。
 type SimpleMemory struct {
 	mu            sync.Mutex
 	dir           string

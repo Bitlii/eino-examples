@@ -104,24 +104,28 @@ func Init() error {
 	return err
 }
 
+// RunAgent 运行智能体对话
 func RunAgent(ctx context.Context, id string, msg string) (*schema.StreamReader[*schema.Message], error) {
 
+	// 构建执行图
 	runner, err := einoagent.BuildEinoAgent(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build agent graph: %w", err)
 	}
 
+	// 从内存中获取对话历史
 	conversation := memory.GetConversation(id, true)
 
 	userMessage := &einoagent.UserMessage{
 		ID:      id,
-		Query:   msg,
-		History: conversation.GetMessages(),
+		Query:   msg,                        // 新输入
+		History: conversation.GetMessages(), // 历史对话
 	}
 	if os.Getenv("APMPLUS_APP_KEY") != "" {
 		// set session info for apmplus callback
 		ctx = apmplus.SetSession(ctx, apmplus.WithSessionID(id), apmplus.WithUserID("eino-assistant-user"))
 	}
+	// Stream 运行智能体对话，设置回调
 	sr, err := runner.Stream(ctx, userMessage, compose.WithCallbacks(cbHandler))
 	if err != nil {
 		return nil, fmt.Errorf("failed to stream: %w", err)

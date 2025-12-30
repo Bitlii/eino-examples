@@ -85,6 +85,7 @@ func BindRoutes(r *route.RouterGroup) error {
 	return nil
 }
 
+// HandleChat 处理对话请求
 func HandleChat(ctx context.Context, c *app.RequestContext) {
 	id := c.Query("id")
 	message := c.Query("message")
@@ -98,6 +99,7 @@ func HandleChat(ctx context.Context, c *app.RequestContext) {
 
 	log.Printf("[Chat] Starting chat with ID: %s, Message: %s\n", id, message)
 
+	// message 中不包含 history，需要通过 id 从内存中获取
 	sr, err := RunAgent(ctx, id, message)
 	if err != nil {
 		log.Printf("[Chat] Error running agent: %v\n", err)

@@ -47,7 +47,7 @@ func init() {
 	}
 
 	// 检查运行所需的关键环境变量
-	env.MustHasEnvs("ARK_CHAT_MODEL", "ARK_EMBEDDING_MODEL", "ARK_API_KEY")
+	env.MustHasEnvs("CHAT_MODEL", "EMBEDDING_MODEL", "CHAT_MODEL_BASE_URL", "EMBEDDING_MODEL_BASE_URL")
 }
 
 func main() {

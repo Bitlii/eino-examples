@@ -20,18 +20,19 @@ import (
 	"context"
 	"os"
 
-	"github.com/cloudwego/eino-ext/components/model/ark"
+	"github.com/cloudwego/eino-ext/components/model/openai"
 	"github.com/cloudwego/eino/components/model"
 )
 
 // newChatModel 初始化 EinoAgent 使用的聊天模型组件。
-// 对接火山引擎 Ark 平台的大语言模型。
-func newChatModel(ctx context.Context) (cm model.ChatModel, err error) {
-	config := &ark.ChatModelConfig{
-		Model:  os.Getenv("ARK_CHAT_MODEL"), // 聊天模型 ID
-		APIKey: os.Getenv("ARK_API_KEY"),    // API Key
+// 对接 OpenAI 的大语言模型。
+func newChatModel(ctx context.Context) (cm model.ToolCallingChatModel, err error) {
+	config := &openai.ChatModelConfig{
+		Model:   os.Getenv("CHAT_MODEL"),         // 聊天模型 ID
+		APIKey:  os.Getenv("CHAT_MODEL_API_KEY"), // API Key
+		BaseURL: os.Getenv("CHAT_MODEL_BASE_URL"),
 	}
-	cm, err = ark.NewChatModel(ctx, config)
+	cm, err = openai.NewChatModel(ctx, config)
 	if err != nil {
 		return nil, err
 	}

@@ -18,18 +18,21 @@ package einoagent
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
 // newLambda 是 EinoAgent 图中 'InputToQuery' 节点的组件初始化函数。
 // 它简单地提取用户输入中的查询语句。
 func newLambda(ctx context.Context, input *UserMessage, opts ...any) (output string, err error) {
+	fmt.Println("newLambda", input)
 	return input.Query, nil
 }
 
 // newLambda2 是 EinoAgent 图中 'InputToHistory' 节点的组件初始化函数。
 // 它将原始输入封装成模板变量，包含内容、历史记录以及当前时间。
 func newLambda2(ctx context.Context, input *UserMessage, opts ...any) (output map[string]any, err error) {
+	fmt.Println("newLambda2", input)
 	return map[string]any{
 		"content": input.Query,
 		"history": input.History,

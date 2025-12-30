@@ -11,6 +11,7 @@ require (
 	github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20251226123311-1d93d527c144
 	github.com/cloudwego/eino-ext/components/embedding/openai v0.0.0-20251226123311-1d93d527c144
 	github.com/cloudwego/eino-ext/components/model/ark v0.1.58
+	github.com/cloudwego/eino-ext/components/model/openai v0.1.6
 	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20251226123311-1d93d527c144
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20251226123311-1d93d527c144
 	github.com/cloudwego/eino-ext/devops v0.1.8
@@ -28,13 +29,13 @@ require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
-	github.com/cloudwego/eino-ext/libs/acl/openai v0.1.2 // indirect
+	github.com/cloudwego/eino-ext/libs/acl/openai v0.1.10 // indirect
 	github.com/cloudwego/gopkg v0.1.4 // indirect
 	github.com/coze-dev/cozeloop-go/spec v0.1.7 // indirect
 	github.com/eino-contrib/jsonschema v1.0.3 // indirect
 	github.com/evanphx/json-patch v0.5.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
-	github.com/meguminnnnnnnnn/go-openai v0.1.0 // indirect
+	github.com/meguminnnnnnnnn/go-openai v0.1.1 // indirect
 	github.com/nikolalohinski/gonja/v2 v2.3.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
