@@ -48,6 +48,7 @@ func BuildEinoAgent(ctx context.Context) (r compose.Runnable[*UserMessage, *sche
 	}
 	_ = g.AddChatTemplateNode(ChatTemplate, chatTemplateKeyOfChatTemplate)
 
+	// 2. 添加 ReAct 智能体节点
 	reactAgentKeyOfLambda, err := newLambda1(ctx)
 	if err != nil {
 		return nil, err
